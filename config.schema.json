@@ -1,0 +1,23 @@
+{
+  "pluginAlias": "DuetHomebridgePlugin",
+  "pluginType": "platform",
+  "singular": true,
+  "strictValidation": false,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "required": true,
+        "default": "Duet3D Printer"
+      },
+      "ip": {
+        "title": "IP",
+        "type": "string",
+        "required": true,
+        "default": ""
+      }
+    }
+  }
+}
