@@ -57,16 +57,16 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const temperatureService = accessory.getService('Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Temperature', 'temperature');
+    const temperatureService = accessory.getService('Extruder Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Extruder Temperature', 'extruder-temperature');
     temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
       .on('get', async (callback: any) => {
         try {
-          this.log.info('Fetching temperatures...');
+          this.log.info('Fetching extruder temperature...');
           const temperatures = await this.getTemperatures();
-          this.log.info('Temperatures fetched:', temperatures);
+          this.log.info('Extruder temperature fetched:', temperatures.extruder);
           callback(null, temperatures.extruder);
         } catch (error) {
-          this.log.error('Error fetching temperatures:', error);
+          this.log.error('Error fetching extruder temperature:', error);
           callback(error as Error);
         }
       });
@@ -158,16 +158,16 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Temperature', 'temperature');
+      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Extruder Temperature', 'extruder-temperature');
       temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
         .on('get', async (callback: any) => {
           try {
-            this.log.info('Fetching temperatures...');
+            this.log.info('Fetching extruder temperature...');
             const temperatures = await this.getTemperatures();
-            this.log.info('Temperatures fetched:', temperatures);
+            this.log.info('Extruder temperature fetched:', temperatures.extruder);
             callback(null, temperatures.extruder);
           } catch (error) {
-            this.log.error('Error fetching temperatures:', error);
+            this.log.error('Error fetching extruder temperature:', error);
             callback(error as Error);
           }
         });
@@ -231,80 +231,80 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
             callback(error as Error);
           }
         });
-  
-        this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
-        this.accessories.set(uuid, accessory);
-  
-        // Set interval to update printer status every 10 seconds
-        setInterval(async () => {
-          try {
-            const status = await this.getPrinterStatus();
-            const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
-            const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-            statusService.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
-  
-            const temperatures = await this.getTemperatures();
-            temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
-            bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
-  
-            const progress = await this.getPrintProgress();
-            progressService.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
-          } catch (error) {
-            this.log.error('Error updating printer status:', error);
-          }
-        }, 10000); // 10 secunde
-      }
-    }
-  
-    async getPrinterStatus() {
-      try {
-        const response = await axios.get('http://192.168.1.146/rr_status?type=2');
-        return response.data;
-      } catch (error) {
-        this.log.error('Error fetching printer status:', error);
-        throw new Error('Failed to fetch printer status');
-      }
-    }
-  
-    async getTemperatures() {
-      try {
-        const response = await axios.get('http://192.168.1.146/rr_status?type=2');
-        const temperatures = {
-          extruder: response.data.temps.current[0],
-          bed: response.data.temps.bed.current,
-        };
-        return temperatures;
-      } catch (error) {
-        this.log.error('Error fetching temperatures:', error);
-        throw new Error('Failed to fetch temperatures');
-      }
-    }
-  
-    async getPrintProgress() {
-      try {
-        const response = await axios.get('http://192.168.1.146/rr_status?type=3');
-        return response.data.progress;
-      } catch (error) {
-        this.log.error('Error fetching print progress:', error);
-        throw new Error('Failed to fetch print progress');
-      }
-    }
-  
-    async pausePrint() {
-      try {
-        await axios.get('http://192.168.1.146/rr_gcode?gcode=M25');
-      } catch (error) {
-        this.log.error('Error pausing print:', error);
-        throw new Error('Failed to pause print');
-      }
-    }
-  
-    async stopPrint() {
-      try {
-        await axios.get('http://192.168.1.146/rr_gcode?gcode=M0');
-      } catch (error) {
-        this.log.error('Error stopping print:', error);
-        throw new Error('Failed to stop print');
-      }
+
+      this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
+      this.accessories.set(uuid, accessory);
+
+      // Set interval to update printer status every 10 seconds
+      setInterval(async () => {
+        try {
+          const status = await this.getPrinterStatus();
+          const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
+          const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+          statusService.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
+
+          const temperatures = await this.getTemperatures();
+          temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
+          bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
+
+          const progress = await this.getPrintProgress();
+          progressService.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
+        } catch (error) {
+          this.log.error('Error updating printer status:', error);
+        }
+      }, 10000); // 10 secunde
     }
   }
+
+  async getPrinterStatus() {
+    try {
+      const response = await axios.get('http://192.168.1.146/rr_status?type=2');
+      return response.data;
+    } catch (error) {
+      this.log.error('Error fetching printer status:', error);
+      throw new Error('Failed to fetch printer status');
+    }
+  }
+
+  async getTemperatures() {
+    try {
+      const response = await axios.get('http://192.168.1.146/rr_status?type=2');
+      const temperatures = {
+        extruder: response.data.temps.current[0],
+        bed: response.data.temps.bed.current,
+      };
+      return temperatures;
+    } catch (error) {
+      this.log.error('Error fetching temperatures:', error);
+      throw new Error('Failed to fetch temperatures');
+    }
+  }
+
+  async getPrintProgress() {
+    try {
+      const response = await axios.get('http://192.168.1.146/rr_status?type=3');
+      return response.data.progress;
+    } catch (error) {
+      this.log.error('Error fetching print progress:', error);
+      throw new Error('Failed to fetch print progress');
+    }
+  }
+
+  async pausePrint() {
+    try {
+      await axios.get('http://192.168.1.146/rr_gcode?gcode=M25');
+    } catch (error) {
+      this.log.error('Error pausing print:', error);
+      throw new Error('Failed to pause print');
+    }
+  }
+
+  async stopPrint() {
+    try {
+      await axios.get('http://192.168.1.146/rr_gcode?gcode=M0');
+    } catch (error) {
+      this.log.error('Error stopping print:', error);
+      throw new Error('Failed to stop print');
+    }
+  }
+}
