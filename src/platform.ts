@@ -231,6 +231,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
             callback(error as Error);
           }
         });
+  
         this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
         this.accessories.set(uuid, accessory);
   
