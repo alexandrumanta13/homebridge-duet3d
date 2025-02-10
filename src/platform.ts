@@ -137,143 +137,113 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
       {
         uniqueId: 'duet3d-extruder-temperature',
         displayName: 'Extruder Temperature',
+        serviceType: this.Service.TemperatureSensor,
+        characteristicType: this.Characteristic.CurrentTemperature,
+        getValue: async () => {
+          const temperatures = await this.getTemperatures();
+          return temperatures.extruder;
+        },
       },
       {
         uniqueId: 'duet3d-bed-temperature',
         displayName: 'Bed Temperature',
+        serviceType: this.Service.TemperatureSensor,
+        characteristicType: this.Characteristic.CurrentTemperature,
+        getValue: async () => {
+          const temperatures = await this.getTemperatures();
+          return temperatures.bed;
+        },
       },
       {
         uniqueId: 'duet3d-printer-progress',
         displayName: 'Print Progress',
+        serviceType: this.Service.OccupancySensor,
+        characteristicType: this.Characteristic.OccupancyDetected,
+        getValue: async () => {
+          const progress = await this.getPrintProgress();
+          return progress;
+        },
       },
       {
         uniqueId: 'duet3d-pause-print',
         displayName: 'Pause Print',
+        serviceType: this.Service.Switch,
+        characteristicType: this.Characteristic.On,
+        setValue: async (value: CharacteristicValue) => {
+          if (value) {
+            await this.pausePrint();
+          }
+        },
       },
       {
         uniqueId: 'duet3d-cancel-print',
         displayName: 'Cancel Print',
+        serviceType: this.Service.Switch,
+        characteristicType: this.Characteristic.On,
+        setValue: async (value: CharacteristicValue) => {
+          if (value) {
+            await this.stopPrint();
+          }
+        },
       },
     ];
-
+  
     for (const device of devices) {
       const uuid = this.api.hap.uuid.generate(device.uniqueId);
       const accessory = new this.api.platformAccessory(device.displayName, uuid);
       accessory.context.device = device;
-
-      const statusService = accessory.addService(this.Service.ContactSensor, 'Printer Status', 'printer-status');
-      statusService.getCharacteristic(this.Characteristic.ContactSensorState)
-        .on('get', async (callback: any) => {
-          try {
-            this.log.info('Fetching printer status...');
-            const status = await this.getPrinterStatus();
-            this.log.info('Printer status fetched:', status);
-            const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
-            const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-            callback(null, state);
-          } catch (error) {
-            this.log.error('Error fetching printer status:', error);
-            callback(error as Error);
-          }
-        });
-
-      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Extruder Temperature', 'temperature');
-      temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
-        .on('get', async (callback: any) => {
-          try {
-            this.log.info('Fetching temperatures...');
-            const temperatures = await this.getTemperatures();
-            this.log.info('Temperatures fetched:', temperatures);
-            callback(null, temperatures.extruder);
-          } catch (error) {
-            this.log.error('Error fetching temperatures:', error);
-            callback(error as Error);
-          }
-        });
-
-      const bedTemperatureService = accessory.addService(this.Service.TemperatureSensor, 'Bed Temperature', 'bed-temperature');
-      bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
-        .on('get', async (callback) => {
-          try {
-            this.log.info('Fetching bed temperature...');
-            const temperatures = await this.getTemperatures();
-            this.log.info('Bed temperature fetched:', temperatures.bed);
-            callback(null, temperatures.bed);
-          } catch (error) {
-            this.log.error('Error fetching bed temperature:', error);
-            callback(error as Error);
-          }
-        });
-
-      const progressService = accessory.addService(this.Service.OccupancySensor, 'Print Progress', 'print-progress');
-      progressService.getCharacteristic(this.Characteristic.OccupancyDetected)
-        .on('get', async (callback) => {
-          try {
-            this.log.info('Fetching print progress...');
-            const progress = await this.getPrintProgress();
-            this.log.info('Print progress fetched:', progress);
-            callback(null, progress);
-          } catch (error) {
-            this.log.error('Error fetching print progress:', error);
-            callback(error as Error);
-          }
-        });
-
-      const pauseService = accessory.addService(this.Service.Switch, 'Pause Print', 'pause-print');
-      pauseService.getCharacteristic(this.Characteristic.On)
-        .on('set', async (value, callback) => {
-          try {
-            if (value) {
-              this.log.info('Pausing print...');
-              await this.pausePrint();
-              this.log.info('Print paused');
+  
+      const service = accessory.addService(device.serviceType, device.displayName, device.uniqueId);
+      
+      if (device.getValue) {
+        service.getCharacteristic(device.characteristicType)
+          .on('get', async (callback: any) => {
+            try {
+              const value = await device.getValue();
+              callback(null, value);
+            } catch (error) {
+              this.log.error(`Error fetching ${device.displayName}:`, error);
+              callback(error as Error);
             }
-            callback();
-          } catch (error) {
-            this.log.error('Error pausing print:', error);
-            callback(error as Error);
-          }
-        });
-
-      const cancelService = accessory.addService(this.Service.Switch, 'Cancel Print', 'cancel-print');
-      cancelService.getCharacteristic(this.Characteristic.On)
-        .on('set', async (value, callback) => {
-          try {
-            if (value) {
-              this.log.info('Stopping print...');
-              await this.stopPrint();
-              this.log.info('Print stopped');
-            }
-            callback();
-          } catch (error) {
-            this.log.error('Error stopping print:', error);
-            callback(error as Error);
-          }
-        });
-  
-        this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
-        this.accessories.set(uuid, accessory);
-  
-        // Set interval to update printer status every 10 seconds
-        setInterval(async () => {
-          try {
-            const status = await this.getPrinterStatus();
-            const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
-            const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-            statusService.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
-  
-            const temperatures = await this.getTemperatures();
-            temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
-            bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
-  
-            const progress = await this.getPrintProgress();
-            progressService.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
-          } catch (error) {
-            this.log.error('Error updating printer status:', error);
-          }
-        }, 10000); // 10 secunde
+          });
       }
+  
+      if (device.setValue) {
+        service.getCharacteristic(device.characteristicType)
+          .on('set', async (value: CharacteristicValue, callback: CharacteristicSetCallback) => {
+            try {
+              await device.setValue(value);
+              callback();
+            } catch (error) {
+              this.log.error(`Error setting ${device.displayName}:`, error);
+              callback(error as Error);
+            }
+          });
+      }
+  
+      this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
+      this.accessories.set(uuid, accessory);
+  
+      // Set interval to update printer status every 10 seconds
+      setInterval(async () => {
+        try {
+          const status = await this.getPrinterStatus();
+          const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
+          const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+          service.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
+  
+          const temperatures = await this.getTemperatures();
+          accessory.getService('Extruder Temperature')?.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
+          accessory.getService('Bed Temperature')?.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
+  
+          const progress = await this.getPrintProgress();
+          accessory.getService('Print Progress')?.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
+        } catch (error) {
+          this.log.error('Error updating printer status:', error);
+        }
+      }, 10000); // 10 secunde
     }
+  }
   
     async getPrinterStatus() {
       try {
