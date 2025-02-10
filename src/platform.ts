@@ -134,7 +134,26 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
 
   discoverDevices() {
     const devices = [
-      { uniqueId: 'duet3d-printer', displayName: '3D Printer' }
+      {
+        uniqueId: 'duet3d-extruder-temperature',
+        displayName: 'Extruder Temperature',
+      },
+      {
+        uniqueId: 'duet3d-bed-temperature',
+        displayName: 'Bed Temperature',
+      },
+      {
+        uniqueId: 'duet3d-printer-progress',
+        displayName: 'Print Progress',
+      },
+      {
+        uniqueId: 'duet3d-pause-print',
+        displayName: 'Pause Print',
+      },
+      {
+        uniqueId: 'duet3d-cancel-print',
+        displayName: 'Cancel Print',
+      },
     ];
 
     for (const device of devices) {
@@ -158,7 +177,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Temperature', 'temperature');
+      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Extruder Temperature', 'temperature');
       temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
         .on('get', async (callback: any) => {
           try {
@@ -270,7 +289,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
       try {
         const response = await axios.get('http://192.168.1.146/rr_status?type=2');
         const temperatures = {
-          extruder: response.data.temps.current[0],
+          extruder: response.data.temps.current[1],
           bed: response.data.temps.bed.current,
         };
         return temperatures;
