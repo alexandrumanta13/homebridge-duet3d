@@ -132,8 +132,21 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
       });
   }
 
+  
+
   discoverDevices() {
     const devices = [
+      {
+        uniqueId: 'duet3d-printer-status',
+        displayName: 'Printer Status',
+        serviceType: this.Service.ContactSensor,
+        characteristicType: this.Characteristic.ContactSensorState,
+        getValue: async () => {
+          const status = await this.getPrinterStatus();
+          const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
+          return isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+        },
+      },
       {
         uniqueId: 'duet3d-extruder-temperature',
         displayName: 'Extruder Temperature',
@@ -230,7 +243,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           const status = await this.getPrinterStatus();
           const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
           const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-          service.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
+          accessory.getService('Printer Status')?.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
   
           const temperatures = await this.getTemperatures();
           accessory.getService('Extruder Temperature')?.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
@@ -244,6 +257,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
       }, 10000); // 10 secunde
     }
   }
+  
   
     async getPrinterStatus() {
       try {
