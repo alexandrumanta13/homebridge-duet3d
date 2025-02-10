@@ -41,7 +41,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
 
     this.accessories.set(accessory.UUID, accessory);
 
-    const statusService = accessory.getService('Printer Status') || accessory.addService(this.Service.ContactSensor, 'Printer Status');
+    const statusService = accessory.getService('Printer Status') || accessory.addService(this.Service.ContactSensor, 'Printer Status', 'printer-status');
     statusService.getCharacteristic(this.Characteristic.ContactSensorState)
       .on('get', async (callback: any) => {
         try {
@@ -57,7 +57,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const temperatureService = accessory.getService('Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Temperature');
+    const temperatureService = accessory.getService('Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Temperature', 'temperature');
     temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
       .on('get', async (callback: any) => {
         try {
@@ -71,7 +71,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const bedTemperatureService = accessory.getService('Bed Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Bed Temperature');
+    const bedTemperatureService = accessory.getService('Bed Temperature') || accessory.addService(this.Service.TemperatureSensor, 'Bed Temperature', 'bed-temperature');
     bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
       .on('get', async (callback) => {
         try {
@@ -85,7 +85,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const progressService = accessory.getService('Print Progress') || accessory.addService(this.Service.OccupancySensor, 'Print Progress');
+    const progressService = accessory.getService('Print Progress') || accessory.addService(this.Service.OccupancySensor, 'Print Progress', 'print-progress');
     progressService.getCharacteristic(this.Characteristic.OccupancyDetected)
       .on('get', async (callback) => {
         try {
@@ -99,7 +99,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const pauseService = accessory.getService('Pause Print') || accessory.addService(this.Service.Switch, 'Pause Print');
+    const pauseService = accessory.getService('Pause Print') || accessory.addService(this.Service.Switch, 'Pause Print', 'pause-print');
     pauseService.getCharacteristic(this.Characteristic.On)
       .on('set', async (value, callback) => {
         try {
@@ -115,7 +115,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
         }
       });
 
-    const cancelService = accessory.getService('Cancel Print') || accessory.addService(this.Service.Switch, 'Cancel Print');
+    const cancelService = accessory.getService('Cancel Print') || accessory.addService(this.Service.Switch, 'Cancel Print', 'cancel-print');
     cancelService.getCharacteristic(this.Characteristic.On)
       .on('set', async (value, callback) => {
         try {
@@ -142,7 +142,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
       const accessory = new this.api.platformAccessory(device.displayName, uuid);
       accessory.context.device = device;
 
-      const statusService = accessory.addService(this.Service.ContactSensor, 'Printer Status');
+      const statusService = accessory.addService(this.Service.ContactSensor, 'Printer Status', 'printer-status');
       statusService.getCharacteristic(this.Characteristic.ContactSensorState)
         .on('get', async (callback: any) => {
           try {
@@ -158,7 +158,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Temperature');
+      const temperatureService = accessory.addService(this.Service.TemperatureSensor, 'Temperature', 'temperature');
       temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
         .on('get', async (callback: any) => {
           try {
@@ -172,7 +172,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const bedTemperatureService = accessory.addService(this.Service.TemperatureSensor, 'Bed Temperature');
+      const bedTemperatureService = accessory.addService(this.Service.TemperatureSensor, 'Bed Temperature', 'bed-temperature');
       bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature)
         .on('get', async (callback) => {
           try {
@@ -186,7 +186,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const progressService = accessory.addService(this.Service.OccupancySensor, 'Print Progress');
+      const progressService = accessory.addService(this.Service.OccupancySensor, 'Print Progress', 'print-progress');
       progressService.getCharacteristic(this.Characteristic.OccupancyDetected)
         .on('get', async (callback) => {
           try {
@@ -200,7 +200,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const pauseService = accessory.addService(this.Service.Switch, 'Pause Print');
+      const pauseService = accessory.addService(this.Service.Switch, 'Pause Print', 'pause-print');
       pauseService.getCharacteristic(this.Characteristic.On)
         .on('set', async (value, callback) => {
           try {
@@ -216,7 +216,7 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
           }
         });
 
-      const cancelService = accessory.addService(this.Service.Switch, 'Cancel Print');
+      const cancelService = accessory.addService(this.Service.Switch, 'Cancel Print', 'cancel-print');
       cancelService.getCharacteristic(this.Characteristic.On)
         .on('set', async (value, callback) => {
           try {
@@ -231,79 +231,79 @@ export class DuetHomebridgePlatform implements DynamicPlatformPlugin {
             callback(error as Error);
           }
         });
-
-      this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
-      this.accessories.set(uuid, accessory);
-      // Set interval to update printer status every 10 seconds
-      setInterval(async () => {
-        try {
-          const status = await this.getPrinterStatus();
-          const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
-          const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-          statusService.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
-
-          const temperatures = await this.getTemperatures();
-          temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
-          bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
-
-          const progress = await this.getPrintProgress();
-          progressService.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
-        } catch (error) {
-          this.log.error('Error updating printer status:', error);
-        }
-      }, 10000); // 10 secunde
+        this.api.registerPlatformAccessories('homebridge-duet3d', 'DuetHomebridgePlatform', [accessory]);
+        this.accessories.set(uuid, accessory);
+  
+        // Set interval to update printer status every 10 seconds
+        setInterval(async () => {
+          try {
+            const status = await this.getPrinterStatus();
+            const isOnline = status.someCondition; // Ajustează în funcție de răspunsul imprimantei
+            const state = isOnline ? this.Characteristic.ContactSensorState.CONTACT_DETECTED : this.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
+            statusService.getCharacteristic(this.Characteristic.ContactSensorState).updateValue(state);
+  
+            const temperatures = await this.getTemperatures();
+            temperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.extruder);
+            bedTemperatureService.getCharacteristic(this.Characteristic.CurrentTemperature).updateValue(temperatures.bed);
+  
+            const progress = await this.getPrintProgress();
+            progressService.getCharacteristic(this.Characteristic.OccupancyDetected).updateValue(progress);
+          } catch (error) {
+            this.log.error('Error updating printer status:', error);
+          }
+        }, 10000); // 10 secunde
+      }
+    }
+  
+    async getPrinterStatus() {
+      try {
+        const response = await axios.get('http://192.168.1.146/rr_status?type=2');
+        return response.data;
+      } catch (error) {
+        this.log.error('Error fetching printer status:', error);
+        throw new Error('Failed to fetch printer status');
+      }
+    }
+  
+    async getTemperatures() {
+      try {
+        const response = await axios.get('http://192.168.1.146/rr_status?type=2');
+        const temperatures = {
+          extruder: response.data.temps.current[0],
+          bed: response.data.temps.bed.current,
+        };
+        return temperatures;
+      } catch (error) {
+        this.log.error('Error fetching temperatures:', error);
+        throw new Error('Failed to fetch temperatures');
+      }
+    }
+  
+    async getPrintProgress() {
+      try {
+        const response = await axios.get('http://192.168.1.146/rr_status?type=3');
+        return response.data.progress;
+      } catch (error) {
+        this.log.error('Error fetching print progress:', error);
+        throw new Error('Failed to fetch print progress');
+      }
+    }
+  
+    async pausePrint() {
+      try {
+        await axios.get('http://192.168.1.146/rr_gcode?gcode=M25');
+      } catch (error) {
+        this.log.error('Error pausing print:', error);
+        throw new Error('Failed to pause print');
+      }
+    }
+  
+    async stopPrint() {
+      try {
+        await axios.get('http://192.168.1.146/rr_gcode?gcode=M0');
+      } catch (error) {
+        this.log.error('Error stopping print:', error);
+        throw new Error('Failed to stop print');
+      }
     }
   }
-
-  async getPrinterStatus() {
-    try {
-      const response = await axios.get('http://192.168.1.146/rr_status?type=2');
-      return response.data;
-    } catch (error) {
-      this.log.error('Error fetching printer status:', error);
-      throw new Error('Failed to fetch printer status');
-    }
-  }
-
-  async getTemperatures() {
-    try {
-      const response = await axios.get('http://192.168.1.146/rr_status?type=2');
-      const temperatures = {
-        extruder: response.data.temps.current[0],
-        bed: response.data.temps.bed.current,
-      };
-      return temperatures;
-    } catch (error) {
-      this.log.error('Error fetching temperatures:', error);
-      throw new Error('Failed to fetch temperatures');
-    }
-  }
-
-  async getPrintProgress() {
-    try {
-      const response = await axios.get('http://192.168.1.146/rr_status?type=3');
-      return response.data.progress;
-    } catch (error) {
-      this.log.error('Error fetching print progress:', error);
-      throw new Error('Failed to fetch print progress');
-    }
-  }
-
-  async pausePrint() {
-    try {
-      await axios.get('http://192.168.1.146/rr_gcode?gcode=M25');
-    } catch (error) {
-      this.log.error('Error pausing print:', error);
-      throw new Error('Failed to pause print');
-    }
-  }
-
-  async stopPrint() {
-    try {
-      await axios.get('http://192.168.1.146/rr_gcode?gcode=M0');
-    } catch (error) {
-      this.log.error('Error stopping print:', error);
-      throw new Error('Failed to stop print');
-    }
-  }
-}
